@@ -10,5 +10,7 @@ typedef struct {
 
 CapiResult process_capi_file(const char *filepath);
 void process_line(const char *line, CapiResult *res);
+void report_error(const char *msg, int line, const char *file);
+void report_warning(const char *msg);
 
 #endif
