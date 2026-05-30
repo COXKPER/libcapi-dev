@@ -1,19 +1,49 @@
 CC = gcc
-CFLAGS = -Wall -fPIC -O2
+CFLAGS = -Wall -Werror -fPIC -O2 -Iinclude
 LDFLAGS = -shared -ldl
 TARGET = libcapi.so
-SRC = libcapi.c
-HDR = libcapi.h
-INSTALL_DIR = /usr/local/lib
+STATIC = libcapi.a
+SRCS = src/libcapi.c src/calib.c src/features.c src/builtins.c
+OBJS = $(SRCS:.c=.o)
+INSTALL_LIB = /usr/local/lib
+INSTALL_INC = /usr/local/include/capi
 
-all: $(TARGET)
+.PHONY: all clean install uninstall test cacli
 
-$(TARGET): $(SRC) $(HDR)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+all: $(TARGET) $(STATIC) cacli
 
-install: $(TARGET)
-	sudo cp $(TARGET) $(INSTALL_DIR)
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+$(STATIC): $(OBJS)
+	ar rcs $@ $^
+
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+test: $(OBJS)
+	$(CC) $(CFLAGS) -o tests/test_main tests/test_main.c $(OBJS) -ldl
+	@echo "Running tests..."
+	@cd tests && ./test_main
+
+cacli: $(TARGET)
+	@echo "Building cacli..."
+	@cd cacli && go build -o cacli
+
+install: $(TARGET) cacli
+	sudo mkdir -p $(INSTALL_INC)
+	sudo cp $(TARGET) $(INSTALL_LIB)/
+	sudo cp $(STATIC) $(INSTALL_LIB)/
+	sudo cp include/libcapi.h include/calib.h $(INSTALL_INC)/
+	sudo cp cacli/cacli /usr/local/bin/cacli
+	sudo ldconfig
+
+uninstall:
+	sudo rm -f $(INSTALL_LIB)/$(TARGET)
+	sudo rm -f $(INSTALL_LIB)/$(STATIC)
+	sudo rm -rf $(INSTALL_INC)
+	sudo rm -f /usr/local/bin/cacli
 	sudo ldconfig
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(OBJS) $(TARGET) $(STATIC) tests/test_main cacli/cacli

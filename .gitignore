@@ -27,7 +27,6 @@
 *.code-workspace
 
 # Generated files
-Makefile
 Makefile.bak
 *.d
 
@@ -40,3 +39,9 @@ Thumbs.db
 
 # Debugging
 *.gdb
+
+# Test binaries
+tests/test_main
+
+# Object files in src
+src/*.o

@@ -13,10 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Make Libraries
+
+    - name: Build libraries
       run: make
-      
+
+    - name: Run tests
+      run: make test
+
     - name: Upload libcapi.so artifact
       uses: actions/upload-artifact@v4.6.2
       with:
