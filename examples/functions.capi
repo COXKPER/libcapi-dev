@@ -1,0 +1,9 @@
+# Functions in CAPI
+int name= "Developer"
+
+function greet:
+    echo: Welcome to libcapi!;
+    echo: name;
+funclose;
+
+greet();

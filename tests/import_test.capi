@@ -1,0 +1,4 @@
+import "import_lib.capi";
+import "import_lib.capi";
+import "import_lib.capi";
+echo: lib_loaded;

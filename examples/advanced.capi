@@ -1,0 +1,47 @@
+# Advanced CAPI Example
+# Demonstrates many features
+
+capi.version;
+
+# Variables and math
+int count= "0"
+math count = count + 1;
+math count = count + 1;
+math count = count + 1;
+echo: count;
+
+# String operations
+int text= "hello world"
+str.upper text;
+echo: text;
+
+# Conditionals
+int debug= "true"
+if debug == "true":
+    echo: Debug mode is ON;
+else:
+    echo: Debug mode is OFF;
+endif;
+
+# Arrays
+array colors = "red" "green" "blue";
+array.len colors;
+array.get colors 0;
+array.push colors "yellow";
+array.len colors;
+
+# Functions
+function banner:
+    echo: ========================;
+    echo: libcapi Advanced Demo;
+    echo: ========================;
+funclose;
+banner();
+
+# Environment
+env.get HOME;
+
+# Timer
+capi.timer start;
+capi.sleep 100;
+capi.timer stop;

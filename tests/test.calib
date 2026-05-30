@@ -1,0 +1,13 @@
+# Test calibration file
+[settings]
+max_threads = 4
+timeout = 30
+debug = true
+
+[paths]
+data_dir = "/opt/data"
+log_file = "/var/log/app.log"
+
+[limits]
+max_connections = 100
+buffer_size = 4096

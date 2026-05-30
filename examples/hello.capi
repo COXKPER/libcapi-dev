@@ -1,0 +1,3 @@
+# Hello World in CAPI
+int msg= "Hello, World!"
+echo: msg;

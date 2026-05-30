@@ -1,0 +1,2 @@
+int lib_loaded = "yes"
+echo: Library loaded!;

@@ -1,0 +1,18 @@
+# Test script for libcapi
+int greeting= "Hello World"
+echo: greeting;
+
+int x= "10"
+math y = x + 5;
+echo: y;
+
+if y == "15":
+    echo: Math works!;
+endif;
+
+function sayhello:
+    echo: Function called!;
+funclose;
+sayhello();
+
+capi.version;
