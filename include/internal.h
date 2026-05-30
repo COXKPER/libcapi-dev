@@ -58,8 +58,6 @@ extern int          g_try_error;
 /* ── Internal Helpers (libcapi.c) ───────────────────────────────────── */
 void        capi_safe_append(char *dest, const char *src, size_t maxlen);
 void        capi_append_output(CapiResult *res, const char *data);
-void        capi_set_variable(const char *name, const char *value);
-const char *capi_get_variable(const char *name);
 void        capi_trim(char *str);
 void        capi_execute_shell(const char *cmd, CapiResult *res);
 void        capi_include_file(const char *path, CapiResult *res);

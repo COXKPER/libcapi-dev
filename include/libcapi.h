@@ -58,6 +58,14 @@ void capi_process_line(const char *line, CapiResult *res);
  */
 void capi_reset(void);
 
+/* ── Plugin API ─────────────────────────────────────────────────────── */
+typedef int (*CapiCommandHandler)(const char *line, CapiResult *res);
+void capi_register_command(const char *prefix, CapiCommandHandler handler);
+
+/* ── Variable Access ────────────────────────────────────────────────── */
+void capi_set_variable(const char *name, const char *value);
+const char *capi_get_variable(const char *name);
+
 /*
  * Return the library version string.
  */

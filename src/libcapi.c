@@ -35,6 +35,25 @@ int          g_calib_loaded = 0;
 int          g_in_try_block = 0;
 int          g_try_error = 0;
 
+/* ── Plugin System ─────────────────────────────────────────────────── */
+
+typedef struct {
+    char prefix[32];
+    CapiCommandHandler handler;
+} CapiCommandHook;
+
+static CapiCommandHook g_hooks[32];
+static int g_hook_count = 0;
+
+void capi_register_command(const char *prefix, CapiCommandHandler handler) {
+    if (g_hook_count < 32 && prefix && handler) {
+        strncpy(g_hooks[g_hook_count].prefix, prefix, 31);
+        g_hooks[g_hook_count].prefix[31] = '\0';
+        g_hooks[g_hook_count].handler = handler;
+        g_hook_count++;
+    }
+}
+
 /* ── Internal Helpers ──────────────────────────────────────────────── */
 
 /*
@@ -285,6 +304,7 @@ void capi_reset(void)
     g_calib_loaded = 0;
     g_in_try_block = 0;
     g_try_error = 0;
+    g_hook_count = 0;
     memset(g_vars, 0, sizeof(g_vars));
     memset(g_funcs, 0, sizeof(g_funcs));
     memset(g_arrays, 0, sizeof(g_arrays));
@@ -578,6 +598,15 @@ void capi_process_line(const char *raw, CapiResult *res)
         capi_trim(fn_name);
         capi_run_function(fn_name, res);
         return;
+    }
+
+    /* ── Plugin hooks ─────────────────────────────────────────────── */
+    for (int i = 0; i < g_hook_count; i++) {
+        if (strncmp(line, g_hooks[i].prefix, strlen(g_hooks[i].prefix)) == 0) {
+            if (g_hooks[i].handler(line, res)) {
+                return;
+            }
+        }
     }
 
     /* ── Fallback: unknown syntax ─────────────────────────────────── */
