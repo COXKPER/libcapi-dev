@@ -453,21 +453,43 @@ int capi_handle_import(const char *line, CapiResult *res)
 
         char *path = buf;
         while (*path == ' ') path++;
+        capi_trim(path);
+
+        int use_sys = 0;
+        int use_pwd = 0;
         size_t plen = strlen(path);
-        
-        if (plen >= 2 && path[0] == '"' && path[plen - 1] == '"') {
+        if (plen >= 2 && path[0] == '<' && path[plen - 1] == '>') {
             path[plen - 1] = '\0';
             path++;
+            use_sys = 1;
+        } else if (plen >= 2 && path[0] == '"' && path[plen - 1] == '"') {
+            path[plen - 1] = '\0';
+            path++;
+            use_pwd = 1;
+        }
+        capi_trim(path);
+
+        char final_path[CAPI_PATH_LEN];
+        if (use_sys) {
+            snprintf(final_path, sizeof(final_path), "/usr/capi/libs/%s", path);
+        } else if (use_pwd) {
+            if (path[0] != '/' && strncmp(path, "./", 2) != 0) {
+                snprintf(final_path, sizeof(final_path), "./%s", path);
+            } else {
+                snprintf(final_path, sizeof(final_path), "%s", path);
+            }
+        } else {
+            snprintf(final_path, sizeof(final_path), "%s", path);
         }
 
-        if (strlen(path) == 0) {
+        if (strlen(final_path) == 0) {
             capi_append_output(res, "[error] import: empty path\n");
             return 1;
         }
 
         /* Check if already imported */
         for (int i = 0; i < g_import_count; i++) {
-            if (strcmp(g_imports[i], path) == 0) {
+            if (strcmp(g_imports[i], final_path) == 0) {
                 /* already imported, silently return */
                 return 1;
             }
@@ -475,15 +497,20 @@ int capi_handle_import(const char *line, CapiResult *res)
 
         /* Add to imports list */
         if (g_import_count < CAPI_MAX_IMPORTS) {
-            snprintf(g_imports[g_import_count], CAPI_PATH_LEN, "%s", path);
+            snprintf(g_imports[g_import_count], CAPI_PATH_LEN, "%s", final_path);
             g_import_count++;
         } else {
             capi_append_output(res, "[error] import: max imports exceeded\n");
             return 1;
         }
 
-        /* Include the file */
-        capi_include_file(path, res);
+        /* Include the file or load .so */
+        size_t final_len = strlen(final_path);
+        if (final_len >= 3 && strcmp(final_path + final_len - 3, ".so") == 0) {
+            capi_load_so(final_path, res);
+        } else {
+            capi_include_file(final_path, res);
+        }
         return 1;
     }
 

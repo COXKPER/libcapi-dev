@@ -142,7 +142,7 @@ greet();
 
 ### 3. File Inclusion & Imports
 
-You can include other `.capi` scripts. The `incl` command executes the file every time it is called. The `import` command executes the file only once per script execution, preventing circular dependencies and double-execution.
+You can include other `.capi` scripts or load `.so` shared libraries. The `incl` command executes the file (or loads the library) every time it is called. The `import` command executes the file (or loads the library) only once per script execution, preventing circular dependencies and double-execution.
 
 ```capi
 # Include executes every time
@@ -150,6 +150,18 @@ incl <path_to_file.capi>;
 
 # Import executes only once
 import "path_to_file.capi";
+
+# Load a shared library (must end in .so)
+import "socket.so";
+incl socket.so;
+```
+
+For shared libraries, the interpreter will use `dlopen` to load the library and attempt to call a `capi_init` function if it exists:
+
+```c
+void capi_init(void) {
+    // Plugin initialization code
+}
 ```
 
 ### Shell Execution

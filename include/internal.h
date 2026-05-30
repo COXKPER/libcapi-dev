@@ -63,6 +63,7 @@ const char *capi_get_variable(const char *name);
 void        capi_trim(char *str);
 void        capi_execute_shell(const char *cmd, CapiResult *res);
 void        capi_include_file(const char *path, CapiResult *res);
+void        capi_load_so(const char *path, CapiResult *res);
 void        capi_run_function(const char *name, CapiResult *res);
 
 /* ── Feature Dispatchers (features.c) ───────────────────────────────── */

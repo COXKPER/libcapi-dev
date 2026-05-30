@@ -211,6 +211,34 @@ void capi_include_file(const char *path, CapiResult *res)
 }
 
 /*
+ * capi_load_so — load a shared library and execute its initialization function.
+ */
+void capi_load_so(const char *path, CapiResult *res)
+{
+    void *handle;
+    char errmsg[CAPI_PATH_LEN + 64];
+
+    if (!path || !res)
+        return;
+
+    handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+    if (!handle) {
+        snprintf(errmsg, sizeof(errmsg), "cannot load shared library: %s", dlerror());
+        if (g_in_try_block) {
+            g_try_error = 1;
+            return;
+        }
+        capi_report_error(errmsg, 0, NULL);
+        return;
+    }
+
+    void (*init_func)(void) = (void (*)(void))dlsym(handle, "capi_init");
+    if (init_func) {
+        init_func();
+    }
+}
+
+/*
  * capi_run_function — execute a stored function by name.
  */
 void capi_run_function(const char *name, CapiResult *res)
@@ -452,15 +480,40 @@ void capi_process_line(const char *raw, CapiResult *res)
         if (len > 0 && inc_path[len - 1] == ';')
             inc_path[len - 1] = '\0';
 
-        /* strip angle brackets if present */
+        /* parse <sys> or "pwd" */
+        int use_sys = 0;
+        int use_pwd = 0;
         len = strlen(inc_path);
         if (len >= 2 && inc_path[0] == '<' && inc_path[len - 1] == '>') {
             memmove(inc_path, inc_path + 1, len - 2);
             inc_path[len - 2] = '\0';
+            use_sys = 1;
+        } else if (len >= 2 && inc_path[0] == '"' && inc_path[len - 1] == '"') {
+            memmove(inc_path, inc_path + 1, len - 2);
+            inc_path[len - 2] = '\0';
+            use_pwd = 1;
         }
         capi_trim(inc_path);
 
-        capi_include_file(inc_path, res);
+        char final_path[CAPI_PATH_LEN];
+        if (use_sys) {
+            snprintf(final_path, sizeof(final_path), "/usr/capi/libs/%s", inc_path);
+        } else if (use_pwd) {
+            if (inc_path[0] != '/' && strncmp(inc_path, "./", 2) != 0) {
+                snprintf(final_path, sizeof(final_path), "./%s", inc_path);
+            } else {
+                snprintf(final_path, sizeof(final_path), "%s", inc_path);
+            }
+        } else {
+            snprintf(final_path, sizeof(final_path), "%s", inc_path);
+        }
+
+        len = strlen(final_path);
+        if (len >= 3 && strcmp(final_path + len - 3, ".so") == 0) {
+            capi_load_so(final_path, res);
+        } else {
+            capi_include_file(final_path, res);
+        }
         return;
     }
 

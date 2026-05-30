@@ -13,9 +13,9 @@
 
 /* ── Version ────────────────────────────────────────────────────────── */
 #define LIBCAPI_VERSION_MAJOR 2
-#define LIBCAPI_VERSION_MINOR 0
-#define LIBCAPI_VERSION_PATCH 0
-#define LIBCAPI_VERSION_STRING "2.0.0"
+#define LIBCAPI_VERSION_MINOR 1
+#define LIBCAPI_VERSION_PATCH 1
+#define LIBCAPI_VERSION_STRING "2.1.1"
 
 /* ── Limits ─────────────────────────────────────────────────────────── */
 #define CAPI_MAX_OUTPUT    16384

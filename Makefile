@@ -5,12 +5,21 @@ TARGET = libcapi.so
 STATIC = libcapi.a
 SRCS = src/libcapi.c src/calib.c src/features.c src/builtins.c
 OBJS = $(SRCS:.c=.o)
-INSTALL_LIB = /usr/local/lib
-INSTALL_INC = /usr/local/include/capi
+INSTALL_LIB = /usr/lib
+INSTALL_INC = /usr/include/capi
 
-.PHONY: all clean install uninstall test cacli
+EXT_DIR = extensions
+EXT_SO = $(EXT_DIR)/socket.so
 
-all: $(TARGET) $(STATIC) cacli
+.PHONY: all clean install uninstall test cacli extensions
+
+all: $(TARGET) $(STATIC) cacli extensions
+
+extensions: $(EXT_SO)
+
+$(EXT_SO): $(EXT_DIR)/socket.c
+	@mkdir -p $(EXT_DIR)
+	$(CC) $(CFLAGS) -shared -fPIC -o $@ $<
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
@@ -30,12 +39,14 @@ cacli: $(TARGET)
 	@echo "Building cacli..."
 	@cd cacli && go build -o cacli
 
-install: $(TARGET) cacli
+install: $(TARGET) cacli extensions
 	sudo mkdir -p $(INSTALL_INC)
 	sudo cp $(TARGET) $(INSTALL_LIB)/
 	sudo cp $(STATIC) $(INSTALL_LIB)/
 	sudo cp include/libcapi.h include/calib.h $(INSTALL_INC)/
 	sudo cp cacli/cacli /usr/local/bin/cacli
+	sudo mkdir -p /usr/capi/libs
+	sudo cp $(EXT_SO) /usr/capi/libs/
 	sudo ldconfig
 
 uninstall:
@@ -47,3 +58,4 @@ uninstall:
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(STATIC) tests/test_main cacli/cacli
+	rm -f $(EXT_DIR)/*.so
