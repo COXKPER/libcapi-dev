@@ -43,7 +43,7 @@ static int run_test_version(void)
     if (!ver || strlen(ver) == 0)
         return 0;
     /* Should contain the version string */
-    if (strstr(ver, "2.0.0") == NULL)
+    if (strstr(ver, "2.1.1") == NULL)
         return 0;
     return 1;
 }
