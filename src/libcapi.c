@@ -42,16 +42,19 @@ typedef struct {
     CapiCommandHandler handler;
 } CapiCommandHook;
 
-static CapiCommandHook g_hooks[32];
+static CapiCommandHook g_hooks[CAPI_MAX_COMMANDS];
 static int g_hook_count = 0;
 
-void capi_register_command(const char *prefix, CapiCommandHandler handler) {
-    if (g_hook_count < 32 && prefix && handler) {
+int capi_register_command(const char *prefix, CapiCommandHandler handler) {
+    if (!prefix || !*prefix || !handler || g_hook_count >= CAPI_MAX_COMMANDS)
+        return -1;
+    {
         strncpy(g_hooks[g_hook_count].prefix, prefix, 31);
         g_hooks[g_hook_count].prefix[31] = '\0';
         g_hooks[g_hook_count].handler = handler;
         g_hook_count++;
     }
+    return 0;
 }
 
 /* ── Internal Helpers ──────────────────────────────────────────────── */
@@ -381,6 +384,20 @@ void capi_process_line(const char *raw, CapiResult *res)
     if (line[0] == '/' && line[1] == '/')
         return;
 
+    /* Friendly aliases for tiny scripts. */
+    if (strncmp(line, "print ", 6) == 0 || strncmp(line, "say ", 4) == 0) {
+        const char *arg = line[0] == 'p' ? line + 6 : line + 4;
+        char friendly[CAPI_LINE_BUF];
+        snprintf(friendly, sizeof(friendly), "echo: %.500s", arg);
+        snprintf(line, sizeof(line), "%s", friendly);
+    }
+
+    /* Accept a bare print/say command as a useful empty-output no-op. */
+    if (strcmp(line, "print;") == 0 || strcmp(line, "say;") == 0) {
+        capi_append_output(res, "\n");
+        return;
+    }
+
     /* ── Function definition mode ─────────────────────────────────── */
     if (g_defining_function >= 0) {
         /* BUG FIX: use strcmp after trimming, not strstr */
@@ -439,10 +456,13 @@ void capi_process_line(const char *raw, CapiResult *res)
     if (capi_handle_calib(line, res))    return;
     if (capi_handle_import(line, res))   return;
     /* ── Variable declaration: "int name= value" ──────────────────── */
-    if (strncmp(line, "int ", 4) == 0) {
+    if (strncmp(line, "int ", 4) == 0 ||
+        strncmp(line, "let ", 4) == 0 ||
+        strncmp(line, "var ", 4) == 0) {
+        const char *declaration = line + 4;
         memset(name_buf, 0, sizeof(name_buf));
         memset(value_buf, 0, sizeof(value_buf));
-        if (sscanf(line, "int %63[^=]= %255[^\n]", name_buf, value_buf) >= 1) {
+        if (sscanf(declaration, "%63[^=]= %255[^\n]", name_buf, value_buf) >= 1) {
             /* BUG FIX: trim whitespace from variable name after sscanf */
             capi_trim(name_buf);
             name_buf[CAPI_NAME_LEN - 1] = '\0';

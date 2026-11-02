@@ -13,9 +13,9 @@
 
 /* ── Version ────────────────────────────────────────────────────────── */
 #define LIBCAPI_VERSION_MAJOR 2
-#define LIBCAPI_VERSION_MINOR 1
-#define LIBCAPI_VERSION_PATCH 1
-#define LIBCAPI_VERSION_STRING "2.1.1"
+#define LIBCAPI_VERSION_MINOR 5
+#define LIBCAPI_VERSION_PATCH 0
+#define LIBCAPI_VERSION_STRING "2.5.0"
 
 /* ── Limits ─────────────────────────────────────────────────────────── */
 #define CAPI_MAX_OUTPUT    16384
@@ -24,6 +24,7 @@
 #define CAPI_MAX_LINES     1024
 #define CAPI_MAX_ARRAYS    64
 #define CAPI_MAX_IMPORTS   64
+#define CAPI_MAX_COMMANDS  32
 #define CAPI_MAX_ARRAY_ITEMS 256
 #define CAPI_LINE_BUF      512
 #define CAPI_NAME_LEN      64
@@ -60,7 +61,12 @@ void capi_reset(void);
 
 /* ── Plugin API ─────────────────────────────────────────────────────── */
 typedef int (*CapiCommandHandler)(const char *line, CapiResult *res);
-void capi_register_command(const char *prefix, CapiCommandHandler handler);
+/*
+ * Register a command prefix such as "hello.".  The handler should return
+ * nonzero when it handled the line.  Returns 0 on success, or -1 when the
+ * arguments are invalid or the command table is full.
+ */
+int capi_register_command(const char *prefix, CapiCommandHandler handler);
 
 /* ── Variable Access ────────────────────────────────────────────────── */
 void capi_set_variable(const char *name, const char *value);

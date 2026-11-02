@@ -43,7 +43,7 @@ static int run_test_version(void)
     if (!ver || strlen(ver) == 0)
         return 0;
     /* Should contain the version string */
-    if (strstr(ver, "2.1.1") == NULL)
+    if (strstr(ver, "2.5.0") == NULL)
         return 0;
     return 1;
 }
@@ -258,6 +258,40 @@ static int run_test_import(void)
     return 1;
 }
 
+static int test_plugin_handler(const char *line, CapiResult *res)
+{
+    if (strcmp(line, "test.plugin;") != 0)
+        return 0;
+    snprintf(res->output + strlen(res->output),
+             sizeof(res->output) - strlen(res->output), "plugin ok\n");
+    return 1;
+}
+
+static int run_test_plugin_registration(void)
+{
+    CapiResult res;
+    memset(&res, 0, sizeof(res));
+    capi_reset();
+    if (capi_register_command("test.plugin", test_plugin_handler) != 0)
+        return 0;
+    capi_process_line("test.plugin;", &res);
+    return strstr(res.output, "plugin ok") != NULL;
+}
+
+static int run_test_friendly_syntax(void)
+{
+    CapiResult res;
+    memset(&res, 0, sizeof(res));
+    capi_reset();
+
+    capi_process_line("let name = \"Capi\"", &res);
+    capi_process_line("print name;", &res);
+    capi_process_line("say \"Halo\";", &res);
+
+    return strstr(res.output, "Capi") != NULL &&
+           strstr(res.output, "Halo") != NULL;
+}
+
 /* ── Main ───────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -277,6 +311,8 @@ int main(void)
     TEST(test_conditionals);
     TEST(test_string_ops);
     TEST(test_import);
+    TEST(test_plugin_registration);
+    TEST(test_friendly_syntax);
 
     printf("\n========================================\n");
     printf("  Results: %d/%d tests passed\n", g_tests_passed, g_tests_total);

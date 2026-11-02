@@ -1,6 +1,6 @@
 # 🔧 libcapi — Create Application Programmable Interface
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
 ![Language](https://img.shields.io/badge/language-C-orange.svg)
@@ -106,24 +106,27 @@ Lines starting with `#` or `//` are comments and are ignored.
 
 ### Variables
 
-Declare variables with `int name= "value"`:
+Declare variables with the friendly `let name = "value"` syntax. `var` and the
+older `int` spelling are also accepted:
 
 ```
-int greeting= "Hello World"
-int count= "42"
-int flag= "true"
+let greeting = "Hello World"
+let count = "42"
+let flag = "true"
 ```
 
 > **Note:** All values are stored as strings internally. The `int` keyword is used for all variable declarations regardless of type.
 
 ### Echo (Output)
 
-Print variable values or literal text:
+Print variable values or literal text. `print` and `say` are friendly aliases:
 
 ```
 int name= "Alice"
 echo: name;
 echo: Hello there!;
+print name;
+say "Hello there!";
 ```
 
 ### Functions
@@ -163,6 +166,33 @@ void capi_init(void) {
     // Plugin initialization code
 }
 ```
+
+#### Creating a library plugin
+
+Plugins are ordinary shared libraries. Include `libcapi.h`, implement a handler,
+and register a prefix from `capi_init`; no sandbox or private SDK is required:
+
+```c
+#include "libcapi.h"
+#include <string.h>
+
+static int hello_handler(const char *line, CapiResult *res) {
+    if (strncmp(line, "hello", 5) != 0) return 0;
+    snprintf(res->output + strlen(res->output),
+             sizeof(res->output) - strlen(res->output), "Hello from a plugin!\n");
+    return 1;
+}
+
+void capi_init(void) {
+    capi_register_command("hello", hello_handler);
+}
+```
+
+Build with `cc -shared -fPIC -I/path/to/libcapi/include -o hello.so hello.c`.
+Load it with `import "./hello.so";` (or `import <hello.so>;` after installing
+it under `/usr/capi/libs`). A handler returns nonzero when it consumed a line.
+`capi_register_command` returns 0 on success and -1 for invalid input or a full
+command table.
 
 ### Shell Execution
 
@@ -428,6 +458,7 @@ calib_free(&cf);
 | `CapiResult capi_process_file(const char *filepath)` | Process a `.capi` script file and return accumulated output |
 | `void capi_process_line(const char *line, CapiResult *res)` | Process a single line of CAPI script |
 | `void capi_reset(void)` | Reset all interpreter state (variables, functions, arrays) |
+| `int capi_register_command(const char *prefix, CapiCommandHandler handler)` | Register a plugin command prefix; returns 0 on success |
 | `const char *capi_version(void)` | Return the library version string |
 | `const char *capi_info(void)` | Return build/feature information |
 

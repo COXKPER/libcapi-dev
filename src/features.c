@@ -342,8 +342,14 @@ int capi_handle_math(const char *line, CapiResult *res)
     if (val_b_str == NULL)
         val_b_str = tok_b;
 
-    long a = strtol(val_a_str, NULL, 10);
-    long b = strtol(val_b_str, NULL, 10);
+    char *end_a = NULL;
+    char *end_b = NULL;
+    long a = strtol(val_a_str, &end_a, 10);
+    long b = strtol(val_b_str, &end_b, 10);
+    if (end_a == val_a_str || *end_a != '\0' || end_b == val_b_str || *end_b != '\0') {
+        capi_append_output(res, "[error] math: expected numbers\n");
+        return 1;
+    }
     long result = 0;
 
     if (strcmp(tok_op, "+") == 0)      result = a + b;
